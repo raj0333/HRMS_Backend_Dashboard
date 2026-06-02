@@ -770,7 +770,7 @@ ${record.paidDate ? `Paid: ${record.paidDate}` : ''}
                   type="submit"
                   className="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white font-semibold rounded-xl transition shadow-lg shadow-red-500/25"
                 >
-                  Process Payroll
+                  Add With Save
                 </button>
               </div>
             </form>
