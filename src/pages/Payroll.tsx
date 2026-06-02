@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Download, FileText, Plus, DollarSign, Search, X, CheckCircle,
-  Clock, CreditCard, Wallet, ChevronDown, ChevronUp, Eye, RefreshCw
+  Clock, CreditCard, Wallet, ChevronDown, ChevronUp, Eye, RefreshCw, Edit, Trash2
 } from 'lucide-react';
 import { PayrollRecord } from '../types';
 
@@ -138,6 +138,22 @@ export function Payroll() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [successMsg, setSuccessMsg] = useState('');
 
+  const [salaryStructure, setSalaryStructure] = useState([
+    { category: 'Earnings', color: 'green', items: [
+      { id: 1, name: 'Base Salary', desc: 'Fixed monthly compensation', pct: '100%' },
+      { id: 2, name: 'HRA (House Rent)', desc: 'House Rent Allowance', pct: '40% of Base' },
+      { id: 3, name: 'DA (Dearness)', desc: 'Dearness Allowance', pct: '10% of Base' },
+      { id: 4, name: 'Medical Allowance', desc: 'Medical benefit', pct: '$1,250 fixed' },
+      { id: 5, name: 'Transport Allowance', desc: 'Commute benefit', pct: '$1,600 fixed' },
+      { id: 6, name: 'Performance Bonus', desc: 'Based on performance review', pct: 'Variable' },
+    ]},
+    { category: 'Deductions', color: 'red', items: [
+      { id: 7, name: 'PF (Provident Fund)', desc: 'Employee PF contribution', pct: '3.6% of Base' },
+      { id: 8, name: 'Income Tax', desc: 'TDS based on income slab', pct: '10-30% variable' },
+      { id: 9, name: 'Loan EMI', desc: 'Employee loan repayment', pct: 'As applicable' },
+    ]},
+  ]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');
@@ -264,6 +280,36 @@ ${record.paidDate ? `Paid: ${record.paidDate}` : ''}
     a.download = `Payslip_${record.employeeId}_${record.month.replace(' ', '_')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const deleteSalaryComponent = (catIdx: number, itemId: number) => {
+    if (window.confirm('Are you sure you want to delete this salary component?')) {
+      setSalaryStructure(prev => prev.map((section, idx) => {
+        if (idx === catIdx) {
+          return { ...section, items: section.items.filter(item => item.id !== itemId) };
+        }
+        return section;
+      }));
+    }
+  };
+
+  const editSalaryComponent = (catIdx: number, itemId: number) => {
+    const section = salaryStructure[catIdx];
+    const item = section.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const newName = window.prompt('Edit Component Name:', item.name);
+    const newDesc = window.prompt('Edit Description:', item.desc);
+    const newRate = window.prompt('Edit Rate/Formula:', item.pct);
+
+    if (newName !== null && newDesc !== null && newRate !== null) {
+      setSalaryStructure(prev => prev.map((s, idx) => {
+        if (idx === catIdx) {
+          return { ...s, items: s.items.map(i => i.id === itemId ? { ...i, name: newName, desc: newDesc, pct: newRate } : i) };
+        }
+        return s;
+      }));
+    }
   };
 
   const toggleRow = (id: string) => {
@@ -792,21 +838,7 @@ ${record.paidDate ? `Paid: ${record.paidDate}` : ''}
               </button>
             </div>
             <div className="p-6 space-y-5">
-              {[
-                { category: 'Earnings', color: 'green', items: [
-                  { name: 'Base Salary', desc: 'Fixed monthly compensation', pct: '100%' },
-                  { name: 'HRA (House Rent)', desc: 'House Rent Allowance', pct: '40% of Base' },
-                  { name: 'DA (Dearness)', desc: 'Dearness Allowance', pct: '10% of Base' },
-                  { name: 'Medical Allowance', desc: 'Medical benefit', pct: '$1,250 fixed' },
-                  { name: 'Transport Allowance', desc: 'Commute benefit', pct: '$1,600 fixed' },
-                  { name: 'Performance Bonus', desc: 'Based on performance review', pct: 'Variable' },
-                ]},
-                { category: 'Deductions', color: 'red', items: [
-                  { name: 'PF (Provident Fund)', desc: 'Employee PF contribution', pct: '3.6% of Base' },
-                  { name: 'Income Tax', desc: 'TDS based on income slab', pct: '10-30% variable' },
-                  { name: 'Loan EMI', desc: 'Employee loan repayment', pct: 'As applicable' },
-                ]},
-              ].map(section => (
+              {salaryStructure.map((section, catIdx) => (
                 <div key={section.category}>
                   <h3 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${section.color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{section.category}</h3>
                   <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600">
@@ -816,14 +848,33 @@ ${record.paidDate ? `Paid: ${record.paidDate}` : ''}
                           <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Component</th>
                           <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Description</th>
                           <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">Rate</th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 dark:text-gray-400">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-dark-700">
-                        {section.items.map((item, i) => (
-                          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-dark-700/50 transition">
+                        {section.items.map((item) => (
+                          <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-dark-700/50 transition">
                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white text-sm">{item.name}</td>
                             <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">{item.desc}</td>
                             <td className={`px-4 py-3 text-right font-semibold text-sm ${section.color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{item.pct}</td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <button 
+                                  onClick={() => editSalaryComponent(catIdx, item.id)}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                                  title="Edit"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => deleteSalaryComponent(catIdx, item.id)}
+                                  className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

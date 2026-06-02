@@ -79,8 +79,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       icon: Building2, label: 'Departments', path: '#',
       submenu: [
         { label: 'All Departments', path: '/departments', icon: UsersRound },
-        { label: 'Add Department', path: '/departments?action=add', icon: PlusCircle },
-        { label: 'Department Map', path: '/departments?action=map', icon: MapPin },
+        // { label: 'Add Department', path: '/departments?action=add', icon: PlusCircle },
+        // { label: 'Department Map', path: '/departments?action=map', icon: MapPin },
       ]
     },
     {
@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       icon: MessageSquare, label: 'Feedback', path: '#',
       submenu: [
         { label: 'Submit Feedback', path: '/feedback', icon: Send },
-        { label: 'Feedback History', path: '/feedback?action=history', icon: List },
+        // { label: 'Feedback History', path: '/feedback?action=history', icon: List },
       ]
     },
     { icon: UserCog, label: 'Admin Access', path: '/admin-access' },
